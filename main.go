@@ -9,6 +9,8 @@ import (
     "github.com/irvandandung/gomon/collector"
     // import package command sesuai dengan module path
     "github.com/irvandandung/gomon/pkg/models/command"
+    //import package gocron
+    "github.com/go-co-op/gocron"
 )
  
 func main() {
@@ -16,8 +18,14 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    // kita akan melakukan looping secara terus-menerus
-    for {
+
+
+    //inisialisasi gocron
+    cron := gocron.NewScheduler(time.Local)
+
+
+    //load running code every 15 second
+    cron.Every(15).Second().Do(func() {
         // panggil fungsi getLoad() yang saat ini berada dalam
         // package collector untuk mendapatkan informasi load yang
         // telah diparsing, dan lakukan pengecekan, jika terdapat error
@@ -35,10 +43,13 @@ func main() {
             log.Println(data)
         }else{
             log.Fatal(err)
-            break
-        }
+            cron.Clear()
+        }        
+    })
 
 
+    //storage running code every 15 second
+    cron.Every(15).Second().Do(func() {
         // panggil collector.GetStorage() yang akan mengembalikan 2 nilai
         // map[string]string dan error, map[string]string yang berisi
         // mountpoint dengan informasi mountpoint tersebut akan kita simpan
@@ -62,16 +73,19 @@ func main() {
             // kapasitas yang sudah digunakan
             datapoint := fmt.Sprintf("diskusage,hostname=server-1,mountpoint=%s size=%d,avail=%d,used=%d", storage, s.Size, s.Avail, s.Used)
             // hit api untuk memasukan data diskusage kedalam database gomondb 
-            data, err = command.ExecCurlInsert("-i", UriConnection(configvar, "write"), datapoint)
+            data, err := command.ExecCurlInsert("-i", UriConnection(configvar, "write"), datapoint)
             if(err == nil){
                 log.Println(data)
             }else{
                 log.Fatal(err)
-                break
+                cron.Clear()
             }
         }  
+    })
 
 
+    //memory running code every 15 second
+    cron.Every(15).Second().Do(func() {
         // panggil fungsi GetMemory() yang berada pada package collector
         // fungsi tsb akan mengembalikan 2 nilai, map[string]uint64 dan error
         // map[string]uint64 yang berisi informasi mengenai memori akan
@@ -84,18 +98,18 @@ func main() {
         // buat line protocol yang berisi informasi mengenai memori
         memdp := fmt.Sprintf("memory,hostname=server-1 memtotal=%d,memused=%d", memory["MemTotal"], memory["Used"])
         // hit api untuk memasukan data memory kedalam database gomondb 
-        data, err = command.ExecCurlInsert("-i", UriConnection(configvar, "write"), memdp)
+        data, err := command.ExecCurlInsert("-i", UriConnection(configvar, "write"), memdp)
         if(err == nil){
             log.Println(data)
         }else{
             log.Fatal(err)
-            break
-        }
+            cron.Clear()
+        }        
+    })
+    
 
-
-        // beri selang waktu 15 detik sebelum melakukan hal yang sama
-        time.Sleep(15 * time.Second)
-    }
+    //start all cron in code
+    cron.StartBlocking()
 }
 
 func UriConnection(configvar *Config, paramQuery string) (uri string){
