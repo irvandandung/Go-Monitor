@@ -108,6 +108,23 @@ func main() {
     })
     
 
+    //cpu
+    cpustat := &collector.CPUStats{}
+    //cpu running code every 15 second
+    cron.Every(15).Second().Do(func() {
+        cputotal := collector.GetCPU(cpustat)
+        datapoint := fmt.Sprintf("cpu,hostname=server-1 totaltime=%.1f", cputotal)
+        // hit api untuk memasukan data diskusage kedalam database gomondb 
+        data, err := command.ExecCurlInsert("-i", UriConnection(configvar, "write"), datapoint)
+        if(err == nil){
+            log.Println(data)
+        }else{
+            log.Fatal(err)
+            cron.Clear()
+        }        
+    })
+
+    
     //start all cron in code
     cron.StartBlocking()
 }
