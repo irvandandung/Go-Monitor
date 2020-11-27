@@ -11,7 +11,7 @@ This is Golang Project for monitoring server with Curl hit &amp; database Influx
 
 	example :
     ```bash
-       cd $your_dir/gokriyatest
+       cd $your_dir/Go-Monitor
     ```
 - Rename config.yml.example file to config.yml
 - Input the influxdb configuration in the config.yml file
@@ -32,6 +32,8 @@ This is Golang Project for monitoring server with Curl hit &amp; database Influx
        go run .
     ```
 
-- after program running, program auto insert data to database every 15 second. You can check data in you db gomondb influxdb.
+- after program running, program auto insert data to database every 15 second. You can check data in you db gomondb.
   * List table auto create in db gomondb : loadavg, diskusage, memory, cpu
+  * below, log when program running :
 
+## Monit With Grafana (Preview)
