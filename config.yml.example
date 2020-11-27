@@ -1,0 +1,7 @@
+database:
+  influxdb:
+    host: "your host db"
+    port: "your port db"
+    username: "your user db"
+    password: "your password db"
+    database: "your database name"
